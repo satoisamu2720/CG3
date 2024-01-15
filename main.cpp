@@ -10,7 +10,7 @@
 #include "externals/imgui/imgui.h"
 #include "externals/imgui/imgui_impl_dx12.h"
 #include "externals/imgui/imgui_impl_win32.h"
-
+#include "externals/DirectXTex/DirectXTex.h"
 
 #include "math/Calculation/Calculation.h"
 
@@ -21,51 +21,6 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg
 #pragma comment(lib,"dxgi.lib")
 #pragma comment(lib,"dxguid.lib")
 #pragma comment(lib,"dxcompiler.lib")
-
-#pragma region CreateBufferResource関数
-ID3D12Resource* CreateBufferResource(ID3D12Device* device, size_t sizeInBytes) {
-	//頂点リソース用のヒープの設定
-	D3D12_HEAP_PROPERTIES uplodeHeapProperties{};
-	uplodeHeapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;//UploadHeapを使う
-	//頂点リソースの設定
-	D3D12_RESOURCE_DESC ResourceDesc{};
-	//バッファリソース。テクスチャの場合はまた別の設定をする
-	ResourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-	ResourceDesc.Width = sizeInBytes;//リソースサイズ
-	//バッファの場合はこれらは１にする決まり
-	ResourceDesc.Height = 1;
-	ResourceDesc.DepthOrArraySize = 1;
-	ResourceDesc.MipLevels = 1;
-	ResourceDesc.SampleDesc.Count = 1;
-	//バッファの場合はこれにする決まり
-	ResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-	HRESULT hr;
-
-	ID3D12Resource* Resource = nullptr;
-	//実際に頂点リソースを作る
-	hr = device->CreateCommittedResource(&uplodeHeapProperties, D3D12_HEAP_FLAG_NONE,
-		&ResourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-		IID_PPV_ARGS(&Resource));
-	assert(SUCCEEDED(hr));
-
-	return Resource;
-};
-#pragma endregion
-
-#pragma region DescriptorHeap関数
-ID3D12DescriptorHeap* CreateDescriptorHeap(ID3D12Device* device, D3D12_DESCRIPTOR_HEAP_TYPE heapType, UINT numDescriptors, bool shaderVisible) {
-	ID3D12DescriptorHeap* descriptorHeap = nullptr;
-	D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc{};
-	descriptorHeapDesc.Type = heapType;//レンダーたーっげtビュー用
-	descriptorHeapDesc.NumDescriptors = numDescriptors;//ダブルバッファ等に２つ。多くても別に構わない
-	descriptorHeapDesc.Flags = shaderVisible ? D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE : D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	HRESULT hr = device->CreateDescriptorHeap(&descriptorHeapDesc, IID_PPV_ARGS(&descriptorHeap));
-	//ディスクリプタヒーブが作れなかったので起動できない
-	assert(SUCCEEDED(hr));
-	return descriptorHeap;
-}
-#pragma endregion
-
 
 void Log(const std::string& message) {
 	OutputDebugStringA(message.c_str());
@@ -189,10 +144,137 @@ IDxcBlob* CompileShader(
 
 #pragma endregion
 
+#pragma region CreateBufferResource関数
+ID3D12Resource* CreateBufferResource(ID3D12Device* device, size_t sizeInBytes) {
+	//頂点リソース用のヒープの設定
+	D3D12_HEAP_PROPERTIES uplodeHeapProperties{};
+	uplodeHeapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;//UploadHeapを使う
+	//頂点リソースの設定
+	D3D12_RESOURCE_DESC ResourceDesc{};
+	//バッファリソース。テクスチャの場合はまた別の設定をする
+	ResourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	ResourceDesc.Width = sizeInBytes;//リソースサイズ
+	//バッファの場合はこれらは１にする決まり
+	ResourceDesc.Height = 1;
+	ResourceDesc.DepthOrArraySize = 1;
+	ResourceDesc.MipLevels = 1;
+	ResourceDesc.SampleDesc.Count = 1;
+	//バッファの場合はこれにする決まり
+	ResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+	HRESULT hr;
 
+	ID3D12Resource* Resource = nullptr;
+	//実際に頂点リソースを作る
+	hr = device->CreateCommittedResource(&uplodeHeapProperties, 
+		D3D12_HEAP_FLAG_NONE,
+		&ResourceDesc,
+		D3D12_RESOURCE_STATE_GENERIC_READ, 
+		nullptr,
+		IID_PPV_ARGS(&Resource));
+	assert(SUCCEEDED(hr));
+
+	return Resource;
+};
+#pragma endregion
+
+#pragma region DescriptorHeap関数
+ID3D12DescriptorHeap* CreateDescriptorHeap(ID3D12Device* device, 
+	D3D12_DESCRIPTOR_HEAP_TYPE heapType,
+	UINT numDescriptors, 
+	bool shaderVisible) {
+	ID3D12DescriptorHeap* descriptorHeap = nullptr;
+	D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc{};
+	descriptorHeapDesc.Type = heapType;//レンダーたーっげtビュー用
+	descriptorHeapDesc.NumDescriptors = numDescriptors;//ダブルバッファ等に２つ。多くても別に構わない
+	descriptorHeapDesc.Flags = shaderVisible ? D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE : D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	HRESULT hr = device->CreateDescriptorHeap(&descriptorHeapDesc, IID_PPV_ARGS(&descriptorHeap));
+	//ディスクリプタヒーブが作れなかったので起動できない
+	assert(SUCCEEDED(hr));
+	return descriptorHeap;
+}
+#pragma endregion
+
+#pragma region LoadTexture関数
+DirectX::ScratchImage LoadTexture(const std::string& filePath) {
+	//テクスチャファイルを読んでプログラムで扱えるようにする
+	DirectX::ScratchImage image{};
+	std::wstring filePathW = ConvertString(filePath);
+	HRESULT hr = DirectX::LoadFromWICFile(filePathW.c_str(),
+		DirectX::WIC_FLAGS_FORCE_SRGB,
+		nullptr,
+		image);
+	assert(SUCCEEDED(hr));
+
+	//ミップマップの作成
+	DirectX::ScratchImage mipImages{};
+	hr = DirectX::GenerateMipMaps(image.GetImages(),
+		image.GetImageCount(), 
+		image.GetMetadata(), 
+		DirectX::TEX_FILTER_SRGB, 
+		0, 
+		mipImages);
+	assert(SUCCEEDED(hr));
+
+	//ミップマップ付きのデータを返す
+	return mipImages;
+}
+#pragma endregion
+
+#pragma region CreateTextureResource関数
+ID3D12Resource* CreateTextureResource(ID3D12Device* device, const DirectX::TexMetadata& metadata) {
+	//metadetaを基にResourceを設定
+	D3D12_RESOURCE_DESC resourceDesc{};
+	resourceDesc.Width = UINT(metadata.width);	//textureの幅
+	resourceDesc.Height = UINT(metadata.height); //Textureの高さ
+	resourceDesc.MipLevels = UINT16(metadata.mipLevels); //mipmapの数
+	resourceDesc.DepthOrArraySize = UINT16(metadata.arraySize); //奥行き or 配列Textureの配列
+	resourceDesc.Format = metadata.format; //TexturaのFormat
+	resourceDesc.SampleDesc.Count = 1; //サンプリングカウント。1固定。
+	resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION(metadata.dimension); //Textureの次元数。普段使っているのは2次元
+
+	//利用するHeapの設定。非常に特殊な運用。02_04exで一般的なケース番である
+	D3D12_HEAP_PROPERTIES heapProperties{};
+	heapProperties.Type = D3D12_HEAP_TYPE_CUSTOM; //細かい設定を行う
+	heapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_BACK; //WriteBackポリシーでCPUアクセス可能
+	heapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_L0; //プロセッサの近くに配置
+
+	//Resourceの生成
+	ID3D12Resource* resource = nullptr;
+	HRESULT hr = device->CreateCommittedResource(
+		&heapProperties, //Heapの設定
+		D3D12_HEAP_FLAG_NONE, //Heapの特殊な設定。特になし。
+		&resourceDesc, //Resouceの設定
+		D3D12_RESOURCE_STATE_GENERIC_READ, //初回のResoourceState。Texturは基本読むだけ
+		nullptr, //Clear最適値。使わないのでnullptr
+		IID_PPV_ARGS(&resource)); //作成するResourceポインタへのポインタ
+	assert(SUCCEEDED(hr));
+	return resource;
+}
+#pragma endregion
+
+#pragma region UploadTextureData関数
+void UploadTextureData(ID3D12Resource* texture, const DirectX::ScratchImage& mipImages) {
+	//Meta情報を取得
+	const DirectX::TexMetadata& metadata = mipImages.GetMetadata();
+	//全MipMapについて
+	for (size_t mipLevel = 0; mipLevel < metadata.mipLevels; ++mipLevel) {
+		//MipMapLevelを指定して各Imageを取得
+		const DirectX::Image* img = mipImages.GetImage(mipLevel, 0, 0);
+		//Textureに転送
+		HRESULT hr = texture->WriteToSubresource(
+			UINT(mipLevel),
+			nullptr,
+			img->pixels,
+			UINT(img->rowPitch),
+			UINT(img->slicePitch)
+		);
+		assert(SUCCEEDED(hr));
+	}
+}
+#pragma endregion
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
-
+	CoInitializeEx(0, COINIT_MULTITHREADED);
 #pragma region ウィンドウ
 
 	WNDCLASS wc{};
@@ -578,11 +660,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	// 書き込むためのアドレスを取得
 	vertexResource->Map(0, nullptr, reinterpret_cast<void**>(&vertexData));
 	// 左下
-	vertexData[0] = { -0.5f,-0.5f,0.0f,1.0f };
+	vertexData[0] = { -1.0f,-0.5f,0.0f,1.0f };
 	// 上
-	vertexData[1] = { 0.0f,0.5f,0.0f,1.0f };
+	vertexData[1] = { 0.0f,1.0f,0.0f,1.0f };
 	// 右下
-	vertexData[2] = { 0.5f,-0.5f,0.0f,1.0f };
+	vertexData[2] = { 1.0f,-0.5f,0.0f,1.0f };
 
 #pragma endregion
 
@@ -645,6 +727,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		srvDescriptorHeap,
 		srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
 		srvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+
+	//Textyreを読んだ転送する
+	DirectX::ScratchImage mipImages = LoadTexture("resources/uvChecker.png");
+	const DirectX::TexMetadata& metadata = mipImages.GetMetadata();
+	ID3D12Resource* textureResource = CreateTextureResource(device, metadata);
+	UploadTextureData(textureResource, mipImages);
+
 #pragma region ゲームループ
 
 	MSG msg{};
@@ -665,7 +754,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 
 			
-			transform.rotate.y += 0.03f;
+			//transform.rotate.y += 0.03f;
 			Matrix4x4 worldMatrix = MakeAffineMatrix(transform.scale, transform.rotate, transform.translate);
 			Matrix4x4 cameraMatrix = MakeAffineMatrix(cameraTransform.scale, cameraTransform.rotate, cameraTransform.translate);
 			Matrix4x4 viewMatrix = Inverse(cameraMatrix);
@@ -832,6 +921,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	ImGui_ImplDX12_Shutdown();
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
+
+	textureResource->Release();
+
 #pragma endregion
 
 #pragma region ReportLiveObjects(DirectX12より低レベルなDXGIに問い合わせを送る)
@@ -846,7 +938,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	}
 
 #pragma endregion
-
+	CoUninitialize();
 	return 0;
 }
 
