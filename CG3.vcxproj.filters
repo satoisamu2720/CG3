@@ -16,6 +16,18 @@
     <Filter Include="imgui">
       <UniqueIdentifier>{cb55596e-b2db-4c2d-a381-81220c9c8953}</UniqueIdentifier>
     </Filter>
+    <Filter Include="math">
+      <UniqueIdentifier>{a726d950-71c7-4da1-ba30-d36076452a89}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="math\Calculation">
+      <UniqueIdentifier>{62f47b48-f08b-4ffe-ac57-dd2d00cde9e9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="math\Matrix">
+      <UniqueIdentifier>{2dbe6a7d-8893-4243-9c8b-56d3d6aa0249}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="math\Vector">
+      <UniqueIdentifier>{51ab4b43-0ac4-4d15-a8c1-dfd20a6d8134}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -41,6 +53,9 @@
     </ClCompile>
     <ClCompile Include="externals\imgui\imgui_widgets.cpp">
       <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="math\Calculation\Calculation.cpp">
+      <Filter>math\Calculation</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -71,6 +86,21 @@
     </ClInclude>
     <ClInclude Include="externals\imgui\imstb_truetype.h">
       <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="math\Calculation\Calculation.h">
+      <Filter>math\Calculation</Filter>
+    </ClInclude>
+    <ClInclude Include="math\Matrix\Matrix4x4.h">
+      <Filter>math\Matrix</Filter>
+    </ClInclude>
+    <ClInclude Include="math\Vector\Vector2.h">
+      <Filter>math\Vector</Filter>
+    </ClInclude>
+    <ClInclude Include="math\Vector\Vector3.h">
+      <Filter>math\Vector</Filter>
+    </ClInclude>
+    <ClInclude Include="math\Vector\Vector4.h">
+      <Filter>math\Vector</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
