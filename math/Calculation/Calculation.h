@@ -13,6 +13,11 @@ struct Transform
 	Vector3 translate;
 };
 
+struct VertexDate {
+	Vector4 position;
+	Vector2 texcoord;
+};
+
 float cot(float theta);
 float Length(const Vector3& v);
 float Dot(const Vector3& v1, const Vector3& v2);
