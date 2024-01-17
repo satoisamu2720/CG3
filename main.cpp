@@ -712,7 +712,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 #pragma endregion
 
 #pragma region VertexResourceを生成する
-	ID3D12Resource* vertexResource = CreateBufferResource(device, sizeof(VertexDate) * 3);
+	ID3D12Resource* vertexResource = CreateBufferResource(device, sizeof(VertexDate) * 6);
 #pragma endregion
 
 #pragma region VertexResourceSpriteを生成する
@@ -780,9 +780,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	vertexDataSprite[0].texcoord = { 0.0f,1.0f };
 	// 上
 	vertexDataSprite[1].position = { 0.0f,0.0f,0.0f,1.0f };
-	vertexDataSprite[1].texcoord = { 0.5f,0.0f };
+	vertexDataSprite[1].texcoord = { 0.0f,0.0f };
 	// 右下
-	vertexDataSprite[2].position = { 64.0f,360.0f,0.0f,1.0f };
+	vertexDataSprite[2].position = { 640.0f,360.0f,0.0f,1.0f };
 	vertexDataSprite[2].texcoord = { 1.0f,1.0f };
 
 	//2枚目の三角形
@@ -793,7 +793,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	vertexDataSprite[4].position = { 640.0f,0.0f,0.0f,1.0f };
 	vertexDataSprite[4].texcoord = { 1.0f,0.0f };
 	// 右下
-	vertexDataSprite[5].position = { 64.0f,360.0f,0.0f,1.0f };
+	vertexDataSprite[5].position = { 640.0f,360.0f,0.0f,1.0f };
 	vertexDataSprite[5].texcoord = { 1.0f,1.0f };
 #pragma endregion
 
@@ -1034,22 +1034,31 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			commandList->SetGraphicsRootSignature(rootSignature);
 			commandList->SetPipelineState(graphicsPipelineState); // PSOを設定
 			
-			commandList->IASetVertexBuffers(0, 1, &vertexBufferView); // VBVを設定
 
-			commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite); // VBVSpriteを設定
 			// 形状を設定。PSOに設定しているものとはまた別。同じものを設定すると考えておけば良い
 			commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			
+			
+			commandList->IASetVertexBuffers(0, 1, &vertexBufferView); // VBVを設定
 			//マテリアルCBufferの場所を設定
 			commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
 			//wvp用のCBufferの場所を設定
 			commandList->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());
-			//wvpSprite用のCBufferの場所を設定
-			commandList->SetGraphicsRootConstantBufferView(1, wvpResourceSprite->GetGPUVirtualAddress());
+			
 			//SRVのDescriptorTableの先頭を設定。2はrootParameter[2]である。
 			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);
 			// 描画！（DrawCall/ドローコール）。6頂点で1つのインスタンス。インスタンスについては今後
 			commandList->DrawInstanced(6, 1, 0, 0);
 
+			// begine
+
+			commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite); // VBVSpriteを設定
+			//wvpSprite用のCBufferの場所を設定
+			commandList->SetGraphicsRootConstantBufferView(1, wvpResourceSprite->GetGPUVirtualAddress());
+			// 描画！（DrawCall/ドローコール）。6頂点で1つのインスタンス。インスタンスについては今後
+			commandList->DrawInstanced(6, 1, 0, 0);
+
+			// end
 
 			ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);
 			// 画面に描く処理はすべて終わり、画面に写すので、状態を遷移
