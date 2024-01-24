@@ -13,6 +13,10 @@ struct Transform
 	Vector3 translate;
 };
 
+struct TransformationMatrix {
+	Matrix4x4 wvp;
+};
+
 struct VertexDate {
 	Vector4 position;
 	Vector2 texcoord;
