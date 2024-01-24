@@ -977,7 +977,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		transforms[index].rotate = { 0.0f,0.0f,0.0f };
 		transforms[index].translate = { index * 0.1f,index * 0.1f,index * 0.1f };
 	}
-
+	int squareCount = 0;
 #pragma region ゲームループ
 
 	MSG msg{};
@@ -1026,6 +1026,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			//ゲーム処理
 			ImGui::ShowDemoWindow();
 			ImGui::Begin("Window");
+
+			
 			float color[] =
 			{
 				materialData->x,
@@ -1035,9 +1037,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			};
 			float triangle[] =
 			{
-				transform.translate.x,
-				transform.translate.y,
-				transform.translate.z
+				transforms[squareCount].translate.x,
+				transforms[squareCount].translate.y,
+				transforms[squareCount].translate.z
 			};
 			float sprite[] =
 			{
@@ -1050,6 +1052,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			ImGui::ColorEdit4("Color", color, 1.0f);
 			ImGui::SliderFloat3("Triangle", triangle, -1.0f, 1.0f);
 			ImGui::SliderFloat3("Sprite", sprite, 0.0f, 640.0f);
+			ImGui::InputInt("SquareCount", &squareCount,1,1);
 			
 
 			materialData->x = color[0];
@@ -1057,9 +1060,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			materialData->z = color[2];
 			materialData->w = color[3];
 
-			transform.translate.x = triangle[0];
-			transform.translate.y = triangle[1];
-			transform.translate.z = triangle[2];
+			transforms[squareCount].translate.x = triangle[0];
+			transforms[squareCount].translate.y = triangle[1];
+			transforms[squareCount].translate.z = triangle[2];
 
 			transformSprite.translate.x = sprite[0];
 			transformSprite.translate.y = sprite[1];
@@ -1252,9 +1255,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	// リソースリークチェック
 	IDXGIDebug1* debug;
 	if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&debug)))) {
-		debug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);
+		/*debug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);
 		debug->ReportLiveObjects(DXGI_DEBUG_APP, DXGI_DEBUG_RLO_ALL);
-		debug->ReportLiveObjects(DXGI_DEBUG_D3D12, DXGI_DEBUG_RLO_ALL);
+		debug->ReportLiveObjects(DXGI_DEBUG_D3D12, DXGI_DEBUG_RLO_ALL);*/
 		debug->Release();
 	}
 
