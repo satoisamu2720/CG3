@@ -715,6 +715,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	ID3D12Resource* vertexResource = CreateBufferResource(device, sizeof(VertexDate) * 6);
 #pragma endregion
 
+#pragma region	IndexResourceSquareを作成する
+	ID3D12Resource* indexResourceSquare = CreateBufferResource(device, sizeof(uint32_t) * 6);
+#pragma endregion	
+
 #pragma region VertexResourceSpriteを生成する
 	ID3D12Resource* vertexResourceSprite = CreateBufferResource(device, sizeof(VertexDate) * 6);
 #pragma endregion
@@ -739,6 +743,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	vertexBufferViewSprite.SizeInBytes = sizeof(VertexDate) * 6;
 	// 1頂点あたりのサイズ
 	vertexBufferViewSprite.StrideInBytes = sizeof(VertexDate);
+#pragma endregion
+
+#pragma region	IndexBufferViewSquareを作成する
+	// 頂点バッファビューを作成する
+	D3D12_INDEX_BUFFER_VIEW indexBufferViewSquare{};
+	// リソースの先頭のアドレスから使う
+	indexBufferViewSquare.BufferLocation = indexResourceSquare->GetGPUVirtualAddress();
+	// 使用するリソースのサイズは頂点3つ分のサイズ
+	indexBufferViewSquare.SizeInBytes = sizeof(uint32_t) * 6;
+	// インデックはuint32_tとする
+	indexBufferViewSquare.Format = DXGI_FORMAT_R32_UINT;
 #pragma endregion
 
 #pragma region 頂点データを書き込む
@@ -797,6 +812,35 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	vertexDataSprite[5].texcoord = { 1.0f,1.0f };
 #pragma endregion
 
+#pragma region 4角形頂点データを書き込む
+	// 頂点リソースにデータを書き込む
+	uint32_t* indexDataSquare = nullptr;
+	// 書き込むためのアドレスを取得
+	indexResourceSquare->Map(0, nullptr, reinterpret_cast<void**>(&indexDataSquare));
+
+	//1枚目の四角形
+	// 左下
+	indexDataSquare[0] = 0;
+	
+	// 上
+	indexDataSquare[1] = 1;
+	
+	// 右下
+	indexDataSquare[2] = 2;
+
+
+	//2枚目の四角形
+	// 左上
+	indexDataSquare[3] = 1;
+	
+	// 右上
+	indexDataSquare[4] = 3;
+
+	// 右下
+	indexDataSquare[5] = 2;
+	
+#pragma endregion
+
 #pragma region MaterialResourceを生成
 	//マテリアル用のリソースを作る。今回はcolor1つ分のサイズを用意する
 	ID3D12Resource* materialResource = CreateBufferResource(device, sizeof(Vector4));
@@ -830,6 +874,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	*wvpDataSprite = MakeIdentity4x4();
 #pragma endregion
 
+#pragma region TransformationMatrixResourceSquareを生成
+	//WVP用のリソースを作る。Matrix4x4　1つ文のサイズを用意する
+	ID3D12Resource* wvpResourceSquare = CreateBufferResource(device, sizeof(Matrix4x4));
+	//データを書き込む
+	Matrix4x4* wvpDataSquare = nullptr;
+	//書き込むためのアドレスを取得
+	wvpResourceSquare->Map(0, nullptr, reinterpret_cast<void**>(&wvpDataSquare));
+	//単位行列を書き込んでおく
+	*wvpDataSquare = MakeIdentity4x4();
+#pragma endregion
+
 #pragma region ViewportとScissor(シザー)
 
 	// ビューポート
@@ -857,6 +912,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Transform transform{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
 
 	Transform transformSprite{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
+
+	Transform transformSquare{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
 
 	Transform cameraTransform{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,-5.0f} };
 
@@ -946,6 +1003,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			Matrix4x4 worldViewProjectionMatrixSprite = Multiply(worldMatrixSprite, Multiply(viewMatrixSprite, projectionMatrixSptite));
 			*wvpDataSprite = worldViewProjectionMatrixSprite;
 
+			//MatrixSquare計算
+			Matrix4x4 worldMatrixSquare = MakeAffineMatrix(transformSquare.scale, transformSquare.rotate, transformSquare.translate);
+			Matrix4x4 viewMatrixSquare = MakeIdentity4x4();
+			Matrix4x4 projectionMatrixSquare = MakeOrthographicMatrix(0.0f, 0.0f, float(kClientWidht), float(kClientHeight), 0.0f, 100.0f);
+			Matrix4x4 worldViewProjectionMatrixSquare = Multiply(worldMatrixSquare, Multiply(viewMatrixSquare, projectionMatrixSquare));
+			*wvpDataSquare = worldViewProjectionMatrixSquare;
+
 			//ゲーム処理
 			ImGui::ShowDemoWindow();
 			ImGui::Begin("Window");
@@ -968,11 +1032,19 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 				transformSprite.translate.y,
 				transformSprite.translate.z
 			};
+			float square[] =
+			{
+				transformSquare.translate.x,
+				transformSquare.translate.y,
+				transformSquare.translate.z
+			};
+			
 
 			//ImGui::SliderFloat4("Color", color, 0.0f, 1.0f);
 			ImGui::ColorEdit4("Color", color, 1.0f);
 			ImGui::SliderFloat3("Triangle", triangle, -1.0f, 1.0f);
 			ImGui::SliderFloat3("Sprite", sprite, 0.0f, 640.0f);
+			ImGui::SliderFloat3("Square", square, 0.0f, 640.0f);
 			
 
 			materialData->x = color[0];
@@ -988,7 +1060,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			transformSprite.translate.y = sprite[1];
 			transformSprite.translate.z = sprite[2];
 			
-
+			transformSquare.translate.x = square[0];
+			transformSquare.translate.y = square[1];
+			transformSquare.translate.z = square[2];
+			
 			ImGui::End();
 #pragma endregion
 
@@ -1037,8 +1112,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 			// 形状を設定。PSOに設定しているものとはまた別。同じものを設定すると考えておけば良い
 			commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-			
-			
+
+#pragma region 三角形描画		
 			commandList->IASetVertexBuffers(0, 1, &vertexBufferView); // VBVを設定
 			//マテリアルCBufferの場所を設定
 			commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
@@ -1048,17 +1123,27 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			//SRVのDescriptorTableの先頭を設定。2はrootParameter[2]である。
 			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);
 			// 描画！（DrawCall/ドローコール）。6頂点で1つのインスタンス。インスタンスについては今後
-			commandList->DrawInstanced(6, 1, 0, 0);
+		    //commandList->DrawInstanced(6, 1, 0, 0);
+#pragma endregion
 
-			// begine
-
+#pragma region スプライト描画
 			commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite); // VBVSpriteを設定
 			//wvpSprite用のCBufferの場所を設定
 			commandList->SetGraphicsRootConstantBufferView(1, wvpResourceSprite->GetGPUVirtualAddress());
 			// 描画！（DrawCall/ドローコール）。6頂点で1つのインスタンス。インスタンスについては今後
-			commandList->DrawInstanced(6, 1, 0, 0);
+			//commandList->DrawInstanced(6, 1, 0, 0);
+#pragma endregion 
 
-			// end
+#pragma region 四角形描画		
+			commandList->IASetIndexBuffer(&indexBufferViewSquare); // VBVを設定
+			//wvp用のCBufferの場所を設定
+			commandList->SetGraphicsRootConstantBufferView(1, wvpResourceSquare->GetGPUVirtualAddress());
+			//SRVのDescriptorTableの先頭を設定。2はrootParameter[2]である。
+			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);
+			// 描画！（DrawCall/ドローコール）。6頂点で1つのインスタンス。インスタンスについては今後
+			//commandList->DrawInstanced(6, 1, 0, 0);
+			commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
+#pragma endregion
 
 			ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);
 			// 画面に描く処理はすべて終わり、画面に写すので、状態を遷移
@@ -1133,6 +1218,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	vertexResource->Release();
 	vertexResourceSprite->Release();
+	indexResourceSquare->Release();
 	
 	graphicsPipelineState->Release();
 	signatureBlob->Release();
@@ -1148,6 +1234,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	
 	wvpResource->Release();
 	wvpResourceSprite->Release();
+	wvpResourceSquare->Release();
 
 	srvDescriptorHeap->Release();
 	dsvDescriptorHeap->Release();
