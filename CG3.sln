@@ -16,8 +16,6 @@ Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM64 = Debug|ARM64
 		Debug|x64 = Debug|x64
-		Profile|ARM64 = Profile|ARM64
-		Profile|x64 = Profile|x64
 		Release|ARM64 = Release|ARM64
 		Release|x64 = Release|x64
 	EndGlobalSection
@@ -26,10 +24,6 @@ Global
 		{00D7CACF-90D2-40E9-BC2D-11AD91936341}.Debug|ARM64.Build.0 = Debug|x64
 		{00D7CACF-90D2-40E9-BC2D-11AD91936341}.Debug|x64.ActiveCfg = Debug|x64
 		{00D7CACF-90D2-40E9-BC2D-11AD91936341}.Debug|x64.Build.0 = Debug|x64
-		{00D7CACF-90D2-40E9-BC2D-11AD91936341}.Profile|ARM64.ActiveCfg = Release|x64
-		{00D7CACF-90D2-40E9-BC2D-11AD91936341}.Profile|ARM64.Build.0 = Release|x64
-		{00D7CACF-90D2-40E9-BC2D-11AD91936341}.Profile|x64.ActiveCfg = Release|x64
-		{00D7CACF-90D2-40E9-BC2D-11AD91936341}.Profile|x64.Build.0 = Release|x64
 		{00D7CACF-90D2-40E9-BC2D-11AD91936341}.Release|ARM64.ActiveCfg = Release|x64
 		{00D7CACF-90D2-40E9-BC2D-11AD91936341}.Release|ARM64.Build.0 = Release|x64
 		{00D7CACF-90D2-40E9-BC2D-11AD91936341}.Release|x64.ActiveCfg = Release|x64
@@ -38,10 +32,6 @@ Global
 		{371B9FA9-4C90-4AC6-A123-ACED756D6C77}.Debug|ARM64.Build.0 = Debug|ARM64
 		{371B9FA9-4C90-4AC6-A123-ACED756D6C77}.Debug|x64.ActiveCfg = Debug|x64
 		{371B9FA9-4C90-4AC6-A123-ACED756D6C77}.Debug|x64.Build.0 = Debug|x64
-		{371B9FA9-4C90-4AC6-A123-ACED756D6C77}.Profile|ARM64.ActiveCfg = Profile|ARM64
-		{371B9FA9-4C90-4AC6-A123-ACED756D6C77}.Profile|ARM64.Build.0 = Profile|ARM64
-		{371B9FA9-4C90-4AC6-A123-ACED756D6C77}.Profile|x64.ActiveCfg = Profile|x64
-		{371B9FA9-4C90-4AC6-A123-ACED756D6C77}.Profile|x64.Build.0 = Profile|x64
 		{371B9FA9-4C90-4AC6-A123-ACED756D6C77}.Release|ARM64.ActiveCfg = Release|ARM64
 		{371B9FA9-4C90-4AC6-A123-ACED756D6C77}.Release|ARM64.Build.0 = Release|ARM64
 		{371B9FA9-4C90-4AC6-A123-ACED756D6C77}.Release|x64.ActiveCfg = Release|x64

@@ -1146,8 +1146,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			// 描画！（DrawCall/ドローコール）。6頂点で1つのインスタンス。インスタンスについては今後
 			commandList->DrawInstanced(6, 1, 0, 0);
 #pragma endregion 
-
+#ifdef _DEBUG
 			ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);
+#endif
 			// 画面に描く処理はすべて終わり、画面に写すので、状態を遷移
 			// 今回はRenderTargetからPresentにする
 			barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
