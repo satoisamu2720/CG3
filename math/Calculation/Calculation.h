@@ -65,3 +65,6 @@ Matrix4x4 MakePerspectiveFovMatrix(float fovY, float aspectRadio, float nearClip
 
 // 正射影行列
 Matrix4x4 MakeOrthographicMatrix(float left, float top, float right, float bottom, float nearClip, float farClip);
+
+//球体行列
+VertexDate Sphere(float kSubdivision, VertexDate* vertexData);
