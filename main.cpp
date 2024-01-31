@@ -923,7 +923,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	materialResourceSphere->Map(0, nullptr, reinterpret_cast<void**>(&materialDataSphere));
 	//今回は赤を書き込んでみる
 	Vector4 colorSphere = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-	bool enableLightingSphereFlag = false;
+	bool enableLightingSphereFlag = true;
 	materialDataSphere->color = colorSphere;
 	materialDataSphere->enableLighting = enableLightingSphereFlag;
 #pragma endregion
