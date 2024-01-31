@@ -896,7 +896,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	//書き込む為のアドレスを取得
 	materialResource->Map(0, nullptr, reinterpret_cast<void**>(&materialData));
 	//今回は赤を書き込んでみる
-	materialData->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	Vector4 color =  Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	materialData->color = color;
 	materialData->enableLighting = false;
 #pragma endregion
 
@@ -908,7 +909,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	//書き込む為のアドレスを取得
 	materialResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&materialDataSprite));
 	//今回は赤を書き込んでみる
-	materialDataSprite->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	Vector4 colorSprite = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	materialDataSprite->color = colorSprite;
 	materialDataSprite->enableLighting = false;
 #pragma endregion
 
@@ -920,8 +922,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	//書き込む為のアドレスを取得
 	materialResourceSphere->Map(0, nullptr, reinterpret_cast<void**>(&materialDataSphere));
 	//今回は赤を書き込んでみる
-	materialDataSphere->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-	materialDataSphere->enableLighting = true;
+	Vector4 colorSphere = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	bool enableLightingSphereFlag = false;
+	materialDataSphere->color = colorSphere;
+	materialDataSphere->enableLighting = enableLightingSphereFlag;
 #pragma endregion
 
 
@@ -970,7 +974,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	directionlLightResource->Map(0, nullptr, reinterpret_cast<void**>(&directionlLightData));
 	//単位行列を書き込んでおく
 	directionlLightData->color = { 1.0f,1.0f,1.0f,1.0f };
-	directionlLightData->direction = { 0.0f,-1.0f,1.0f };
+	directionlLightData->direction = { 0.0f,-1.0f,0.0f };
 	directionlLightData->intensity = 1.0f;
 #pragma endregion
 
@@ -1113,10 +1117,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			ImGui::Begin("Window");
 			float color[] =
 			{
-				materialData->color.x,
-				materialData->color.y,
-				materialData->color.z,
-				materialData->color.w
+				materialDataSphere->color.x,
+				materialDataSphere->color.y,
+				materialDataSphere->color.z,
+				materialDataSphere->color.w
 			};
 			float triangle[] =
 			{
@@ -1144,17 +1148,27 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 				directionlLightData->direction.z,
 			};
 
+			float lightColor[] =
+			{
+				directionlLightData->color.x,
+				directionlLightData->color.y,
+				directionlLightData->color.z,
+				directionlLightData->color.w,
+			};
+
 			ImGui::ColorEdit4("Color", color, 1.0f);
 			ImGui::SliderFloat3("Triangle", triangle, -1.0f, 1.0f);
 			ImGui::SliderFloat3("Sprite", sprite, 0.0f, 640.0f);
 			ImGui::SliderFloat3("Sphere", sphere, -1.0f, 1.0f);
-			ImGui::SliderFloat3("Light", light, -1280.0f, 1280.0f);
+			ImGui::SliderFloat3("Light", light, -1.0f, 1.0f);
+			ImGui::ColorEdit4("LightColor", lightColor, 1.0f);
+			ImGui::Checkbox("Lighting Sphere Flag", &enableLightingSphereFlag);
 			
 
-			materialData->color.x = color[0];
-			materialData->color.y = color[1];
-			materialData->color.z = color[2];
-			materialData->color.w = color[3];
+			materialDataSphere->color.x = color[0];
+			materialDataSphere->color.y = color[1];
+			materialDataSphere->color.z = color[2];
+			materialDataSphere->color.w = color[3];
 
 			transform.translate.x = triangle[0];
 			transform.translate.y = triangle[1];
@@ -1171,6 +1185,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			directionlLightData->direction.x = light[0];
 			directionlLightData->direction.y = light[1];
 			directionlLightData->direction.z = light[2];
+
+			directionlLightData->color.x = lightColor[0];
+			directionlLightData->color.y = lightColor[1];
+			directionlLightData->color.z = lightColor[2];
+			directionlLightData->color.w = lightColor[3];
+
+			materialDataSphere->enableLighting = enableLightingSphereFlag;
 			
 
 			ImGui::End();
@@ -1228,7 +1249,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
 			//wvp用のCBufferの場所を設定
 			commandList->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());
-			commandList->SetGraphicsRootConstantBufferView(3, directionlLightResource->GetGPUVirtualAddress());
+			//commandList->SetGraphicsRootConstantBufferView(3, directionlLightResource->GetGPUVirtualAddress());
 			//SRVのDescriptorTableの先頭を設定。2はrootParameter[2]である。
 			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);
 			// 描画！（DrawCall/ドローコール）。6頂点で1つのインスタンス。インスタンスについては今後
