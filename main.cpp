@@ -564,7 +564,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 #pragma endregion
 
 	// RootSignature作成。複数設定できるので配列。
-	D3D12_ROOT_PARAMETER rootParameters[4] = {};
+	D3D12_ROOT_PARAMETER rootParameters[5] = {};
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV; //CBVを使う
 	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;//PixelShaderで使う
 	rootParameters[0].Descriptor.ShaderRegister = 0; //レジスタ番号0とバインド
@@ -583,6 +583,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV; //CBVを使う
 	rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;//PixelShaderで使う
 	rootParameters[3].Descriptor.ShaderRegister = 1; //レジスタ番号0とバインド
+
+
+	rootParameters[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV; //CBVを使う
+	rootParameters[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;//PixelShaderで使う
+	rootParameters[4].Descriptor.ShaderRegister = 2; //レジスタ番号0とバインド
 
 #pragma endregion
 
@@ -926,14 +931,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	bool enableLightingSphereFlag = true;
 	materialDataSphere->color = colorSphere;
 	materialDataSphere->enableLighting = enableLightingSphereFlag;
+	materialDataSphere->shininess = 100;
 #pragma endregion
 
 
 #pragma region Matrix三角形を生成
 	//WVP用のリソースを作る。Matrix4x4　1つ文のサイズを用意する
-	ID3D12Resource* wvpResource = CreateBufferResource(device, sizeof(TransformtionMatrix));
+	ID3D12Resource* wvpResource = CreateBufferResource(device, sizeof(TransFormtionMatrix));
 	//データを書き込む
-	TransformtionMatrix* wvpData = nullptr;
+	TransFormtionMatrix* wvpData = nullptr;
 	//書き込むためのアドレスを取得
 	wvpResource->Map(0, nullptr, reinterpret_cast<void**>(&wvpData));
 	//単位行列を書き込んでおく
@@ -943,9 +949,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 #pragma region Matrixスプライトを生成
 	//WVP用のリソースを作る。Matrix4x4　1つ文のサイズを用意する
-	ID3D12Resource* wvpResourceSprite = CreateBufferResource(device, sizeof(TransformtionMatrix));
+	ID3D12Resource* wvpResourceSprite = CreateBufferResource(device, sizeof(TransFormtionMatrix));
 	//データを書き込む
-	TransformtionMatrix* wvpDataSprite = nullptr;
+	TransFormtionMatrix* wvpDataSprite = nullptr;
 	//書き込むためのアドレスを取得
 	wvpResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&wvpDataSprite));
 	//単位行列を書き込んでおく
@@ -955,9 +961,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 #pragma region Matrix球体を生成
 	//WVP用のリソースを作る。Matrix4x4　1つ文のサイズを用意する
-	ID3D12Resource* wvpResourceSphere = CreateBufferResource(device, sizeof(TransformtionMatrix));
+	ID3D12Resource* wvpResourceSphere = CreateBufferResource(device, sizeof(TransFormtionMatrix));
 	//データを書き込む
-	TransformtionMatrix* wvpDataSphere = nullptr;
+	TransFormtionMatrix* wvpDataSphere = nullptr;
 	//書き込むためのアドレスを取得
 	wvpResourceSphere->Map(0, nullptr, reinterpret_cast<void**>(&wvpDataSphere));
 	//単位行列を書き込んでおく
@@ -976,6 +982,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	directionlLightData->color = { 1.0f,1.0f,1.0f,1.0f };
 	directionlLightData->direction = { 0.0f,-1.0f,0.0f };
 	directionlLightData->intensity = 1.0f;
+#pragma endregion
+
+#pragma  region Resourceカメラを生成
+	//WVP用のリソースを作る。Matrix4x4　1つ文のサイズを用意する
+	ID3D12Resource* cameraResource = CreateBufferResource(device, sizeof(CameraForGPU));
+	//データを書き込む
+	CameraForGPU* cameraData = nullptr;
+	//書き込むためのアドレスを取得
+	cameraResource->Map(0, nullptr, reinterpret_cast<void**>(&cameraData));
+	//単位行列を書き込んでおく
+	
 #pragma endregion
 
 #pragma region ViewportとScissor(シザー)
@@ -1060,8 +1077,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	Transform cameraTransform{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,-10.0f} };
 
-	//DirectionalLight directionlLight{ { 1.0f,1.0f,1.0f,1.0f },{ 0.0f,-1.0f,0.0f },{1.0f} };
-
+	cameraData->worldPosition = cameraTransform.translate;
 
 #pragma region ゲームループ
 
@@ -1281,10 +1297,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			commandList->SetGraphicsRootConstantBufferView(0, materialResourceSphere->GetGPUVirtualAddress());
 			//wvp用のCBufferの場所を設定
 			commandList->SetGraphicsRootConstantBufferView(1, wvpResourceSphere->GetGPUVirtualAddress());
-			//ライティングのCBufferの場所を設定
-			commandList->SetGraphicsRootConstantBufferView(3, directionlLightResource->GetGPUVirtualAddress());
 			//SRVのDescriptorTableの先頭を設定。2はrootParameter[2]である。
 			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);
+			//ライティングのCBufferの場所を設定
+			commandList->SetGraphicsRootConstantBufferView(3, directionlLightResource->GetGPUVirtualAddress());
+
+			commandList->SetGraphicsRootConstantBufferView(4, cameraResource->GetGPUVirtualAddress());
 			// 描画！（DrawCall/ドローコール）。6頂点で1つのインスタンス。インスタンスについては今後
 			commandList->DrawInstanced(vertexCount, 1, 0, 0);
 #pragma endregion 
@@ -1380,6 +1398,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	materialResource->Release();
 	materialResourceSprite->Release();
 	materialResourceSphere->Release();
+
+	cameraResource->Release();
 
 	wvpResource->Release();
 	wvpResourceSprite->Release();

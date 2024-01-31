@@ -22,9 +22,10 @@ struct VertexDate {
 struct Material {
 	Vector4 color;
 	int32_t enableLighting;
+	float shininess;
 };
 
-struct TransformtionMatrix
+struct TransFormtionMatrix
 {
 	Matrix4x4 WVP;
 	Matrix4x4 World;
@@ -35,6 +36,10 @@ struct DirectionalLight
 	Vector4 color;
 	Vector3 direction;
 	float intensity;
+};
+
+struct CameraForGPU {
+	Vector3 worldPosition;
 };
 
 float cot(float theta);
